@@ -1,5 +1,10 @@
 <?php
 
+// Define STDERR
+if(!defined('STDERR')) {
+	define('STDERR', fopen('php://stderr', 'wb'));
+}
+
 class ServerlessSupport
 {
 	/**
@@ -27,6 +32,7 @@ class ServerlessSupport
 		// Loop through the directories and create them
 		foreach ($directories as $directory) {
 			if (!is_dir($directory)) {
+				fwrite(STDERR, "> Storage Bootstrap: Creating storage directory: $directory".PHP_EOL);
 				mkdir($directory, 0755, true);
 			}
 		}
@@ -50,6 +56,7 @@ class ServerlessSupport
 		// Set the locations in the environment
 		foreach($map as $key => $value) {
 			if(empty($_ENV[$key])) {
+				fwrite(STDERR, "> Storage Bootstrap: Setting $key to $value".PHP_EOL);
 				$_ENV[$key] = $value;
 			}
 		}
