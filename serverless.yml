@@ -1,0 +1,188 @@
+service: serverless-playground
+org: serverlessplayground
+app: laravel
+
+provider:
+  name: aws
+  region: us-west-2
+  stage: dev
+  profile: serverless
+  runtime: provided.al2
+  lambdaHashingVersion: 20201221
+  environment:
+    APP_URL: https://app.firstaccessdata.com
+    AWS_BUCKET: !Ref Storage
+    CACHE_DRIVER: dynamodb
+    DB_DATABASE: !Sub '{{resolve:secretsmanager:DBTABLE}}'
+    DB_HOST: !GetAtt [Database, Endpoint.Address]
+    DB_USERNAME: !Sub '{{resolve:secretsmanager:DBUSERNAME}}'
+    DB_PASSWORD: !Sub '{{resolve:secretsmanager:DBPASSWORD}}'
+    DYNAMODB_CACHE_TABLE: !Ref Cache
+    FILESYSTEM_DRIVER: s3
+    MAIL_MAILER: ses
+    QUEUE_CONNECTION: sqs
+    SESSION_DRIVER: dynamodb
+    SESSION_SECURE_COOKIE: false
+    SQS_QUEUE: ${construct:jobs.queueUrl}
+    VIEW_COMPILED_PATH: /tmp/storage/framework/views
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - 'dynamodb:DescribeTable'
+            - 'dynamodb:Query'
+            - 'dynamodb:Scan'
+            - 'dynamodb:GetItem'
+            - 'dynamodb:PutItem'
+            - 'dynamodb:UpdateItem'
+            - 'dynamodb:DeleteItem'
+          Resource:
+            - !GetAtt Cache.Arn
+        - Effect: Allow
+          Action: s3:*
+          Resource:
+            - !Sub '${Storage.Arn}'
+            - !Sub '${Storage.Arn}/*'
+        - Effect: Allow
+          Action: 'secretsmanager:GetSecretValue'
+          Resource:
+            - !Ref DatabaseUsername
+            - !Ref DatabasePassword
+            - !Ref DatabaseTable
+        - Effect: Allow
+          Action:
+            - 'ses:SendRawEmail'
+            - 'ses:SendEmail'
+          Resource: '*'
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!public/storage'
+    - '!resources/assets/**'
+    - '!storage/**'
+    - '!tests/**'
+
+functions:
+  web:
+    handler: public/index.php
+    timeout: 28
+    layers:
+      - ${bref:layer.php-80-fpm}
+    events:
+      - httpApi: '*'
+  artisan:
+    handler: artisan
+    timeout: 120
+    layers:
+      - ${bref:layer.php-80}
+      - ${bref:layer.console}
+
+resources:
+  Resources:
+    DatabaseTable:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: DBTABLE
+        GenerateSecretString:
+          PasswordLength: 10
+          ExcludeCharacters: '"@/\'
+          ExcludeNumbers: true
+          ExcludePunctuation: true
+    DatabaseUsername:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: DBUSERNAME
+        GenerateSecretString:
+          PasswordLength: 16
+          ExcludeCharacters: '"@/\'
+          ExcludeNumbers: true
+          ExcludePunctuation: true
+    DatabasePassword:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: DBPASSWORD
+        GenerateSecretString:
+          PasswordLength: 30
+          ExcludeCharacters: '"@/\'
+    Database:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        AllocatedStorage: 20
+        AutoMinorVersionUpgrade: true
+        AvailabilityZone: ${opt:region, self:provider.region}a
+        DBName: !Sub "{{resolve:secretsmanager:DBTABLE}}"
+        DBInstanceClass: db.t2.micro
+        Engine: mysql
+        MasterUsername: !Sub "{{resolve:secretsmanager:DBUSERNAME}}"
+        MasterUserPassword: !Sub "{{resolve:secretsmanager:DBPASSWORD}}"
+        PubliclyAccessible: true
+        StorageType: standard
+    Cache:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: key
+            AttributeType: S
+        KeySchema:
+          - AttributeName: key
+            KeyType: HASH
+    Storage:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        VersioningConfiguration:
+          Status: Enabled
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+              AllowedOrigins:
+                - '*'
+              MaxAge: 3600
+
+constructs:
+  website:
+    type: server-side-website
+    domain: '*.firstaccessdata.com'
+    certificate: arn:aws:acm:us-east-1:369512654573:certificate/d1365d10-0ce3-4839-90a8-f7d708858417
+    forwardedHeaders:
+      - Accept
+      - Accept-Language
+      - Authorization
+      - Content-Type
+      - Origin
+      - Referer
+      - User-Agent
+      - X-Forwarded-Host
+      - X-Requested-With
+      - X-Livewire
+    assets:
+      '/js/*': public/js
+      '/css/*': public/css
+      '/vendor/*': public/vendor
+      '/favicon.ico': public/favicon.ico
+      '/robots.txt': public/robots.txt
+  jobs:
+    type: queue
+    worker:
+      handler: worker.php
+      timeout: 28
+      layers:
+        - ${bref:layer.php-80}
+
+custom:
+  serverless-offline:
+    httpPort: 4000
+
+plugins:
+  - ./vendor/bref/bref
+  - serverless-lift
+  - serverless-offline
