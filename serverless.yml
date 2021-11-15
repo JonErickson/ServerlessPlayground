@@ -23,7 +23,6 @@ provider:
     SESSION_DRIVER: dynamodb
     SESSION_SECURE_COOKIE: false
     SQS_QUEUE: ${construct:jobs.queueUrl}
-    VIEW_COMPILED_PATH: /tmp/storage/framework/views
   iam:
     role:
       statements:

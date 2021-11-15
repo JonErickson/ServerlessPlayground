@@ -29,6 +29,7 @@ if (isset($_ENV['SERVER_SOFTWARE']) && $_ENV['SERVER_SOFTWARE'] === 'bref') {
 	require_once __DIR__.'/serverless.php';
 	ServerlessSupport::create();
 	ServerlessSupport::configure();
+	$app->useStoragePath(ServerlessSupport::PATH);
 }
 
 /*
