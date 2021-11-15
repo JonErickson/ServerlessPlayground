@@ -16,6 +16,7 @@ provider:
     DB_PASSWORD: !Sub '{{resolve:secretsmanager:DBPASSWORD}}'
     DYNAMODB_CACHE_TABLE: !Ref Cache
     FILESYSTEM_DRIVER: s3
+    LOG_CHANNEL: stderr
     MAIL_MAILER: ses
     QUEUE_CONNECTION: sqs
     SESSION_DRIVER: dynamodb

@@ -32,6 +32,7 @@ if (isset($_ENV['SERVER_SOFTWARE']) && $_ENV['SERVER_SOFTWARE'] === 'bref') {
 	if (!file_exists('/tmp/storage/framework/cache')) {
 		mkdir('/tmp/storage/framework/cache', 0777, true);
 	}
+	$this->useStoragePath('/tmp/storage');
 }
 
 /*
