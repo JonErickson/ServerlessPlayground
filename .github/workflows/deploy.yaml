@@ -4,13 +4,13 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
       - prerelease
 
 deploy:
   name: Deploy Application
   runs-on: ubuntu-latest
-  if: github.ref == 'refs/heads/main'
+  if: github.ref == 'refs/heads/master'
   steps:
     - name: Checkout Source Code
       uses: actions/checkout@v2
