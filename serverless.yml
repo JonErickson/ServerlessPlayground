@@ -4,6 +4,7 @@ provider:
   name: aws
   region: us-west-2
   stage: dev
+  profile: serverless
   runtime: provided.al2
   lambdaHashingVersion: 20201221
   environment:
@@ -56,6 +57,7 @@ provider:
 
 package:
   patterns:
+    - '!bootstrap/cache/**'
     - '!node_modules/**'
     - '!public/storage'
     - '!resources/assets/**'

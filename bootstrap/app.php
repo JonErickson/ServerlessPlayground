@@ -26,13 +26,9 @@ $app = new Illuminate\Foundation\Application(
 |
 */
 if (isset($_ENV['SERVER_SOFTWARE']) && $_ENV['SERVER_SOFTWARE'] === 'bref') {
-	if (!file_exists('/tmp/storage/bootstrap/cache')) {
-		mkdir('/tmp/storage/bootstrap/cache', 0777, true);
-	}
-	if (!file_exists('/tmp/storage/framework/cache')) {
-		mkdir('/tmp/storage/framework/cache', 0777, true);
-	}
-	$app->useStoragePath('/tmp/storage');
+	require_once __DIR__.'/serverless.php';
+	ServerlessSupport::create();
+	ServerlessSupport::configure();
 }
 
 /*
