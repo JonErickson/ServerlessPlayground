@@ -1,7 +1,3 @@
-service: serverless-playground
-org: serverlessplayground
-app: laravel
-
 provider:
   name: aws
   region: us-west-2
