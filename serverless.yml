@@ -53,6 +53,12 @@ provider:
             - 'ses:SendRawEmail'
             - 'ses:SendEmail'
           Resource: '*'
+        - Effect: Allow
+          Action:
+            - 'ssm:Describe*'
+            - 'ssm:Get*'
+            - 'ssm:List*'
+          Resource: '*'
 
 package:
   patterns:
@@ -68,15 +74,15 @@ functions:
     handler: public/index.php
     timeout: 28
     layers:
-      - ${bref:layer.php-80-fpm}
+      - arn:aws:lambda:us-west-2:369512654573:layer:php-80-fpm-laravel:4
     events:
       - httpApi: '*'
-  artisan:
+  cli:
     handler: artisan
     timeout: 120
     layers:
       - ${bref:layer.php-80}
-      - ${bref:layer.console}
+      - arn:aws:lambda:us-west-2:369512654573:layer:cli:2
 
 resources:
   Resources:
@@ -154,7 +160,6 @@ constructs:
     certificate: arn:aws:acm:us-east-1:369512654573:certificate/d1365d10-0ce3-4839-90a8-f7d708858417
     forwardedHeaders:
       - Accept
-      - Accept-Language
       - Authorization
       - Content-Type
       - Origin
@@ -163,6 +168,8 @@ constructs:
       - X-Forwarded-Host
       - X-Requested-With
       - X-Livewire
+      - X-XSRF-TOKEN
+      - X-CSRF-TOKEN
     assets:
       '/js/*': public/js
       '/css/*': public/css
