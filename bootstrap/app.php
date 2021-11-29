@@ -17,23 +17,6 @@ $app = new Illuminate\Foundation\Application(
 
 /*
 |--------------------------------------------------------------------------
-| Serverless Support
-|--------------------------------------------------------------------------
-|
-| We need to create a writable cache directory for use of Real
-| Time Facades which makes raw calls to storage_path(). This
-| allows Livewire to properly use auto-discovery for components.
-|
-*/
-if (isset($_ENV['SERVER_SOFTWARE']) && $_ENV['SERVER_SOFTWARE'] === 'bref') {
-	require_once __DIR__.'/serverless.php';
-	ServerlessSupport::create();
-	ServerlessSupport::configure();
-	$app->useStoragePath(ServerlessSupport::PATH);
-}
-
-/*
-|--------------------------------------------------------------------------
 | Bind Important Interfaces
 |--------------------------------------------------------------------------
 |
